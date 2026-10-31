@@ -10,6 +10,7 @@
 </head>
 <body>
 <title>Data Book</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -806,7 +807,7 @@ function renderWeather() {
   ww.hidden = !wx;
   if (wx) ww.textContent = `Forecast near you (${ago(age)}): ${wx.windMph} mph from ${compass(wx.windDir)}, gusts ${wx.gustMph}. A starting point only; set your own call.`;
 }
-async function getWeather(quiet) {
+async function getWeather(quiet, launch) {
   if (wxBusy) return;
   wxBusy = true; wxMsg = ""; renderWeather();
   try {
@@ -825,8 +826,9 @@ async function getWeather(quiet) {
     wx = { ts: new Date().toISOString(), tempF: Math.round(c.temperature_2m), pressureInHg: Math.round(c.surface_pressure * 0.0295300 * 100) / 100,
       altFt: Math.round(j.elevation * 3.28084), windMph: Math.round(c.wind_speed_10m), windDir: c.wind_direction_10m, gustMph: Math.round(c.wind_gusts_10m) };
     writePref("wx", wx);
-    // A background refresh never overwrites numbers you typed yourself.
-    if (!quiet || untouched) {
+    // At launch, fresh weather always fills in. A refresh later in the same session
+    // (switching back to the app) never overwrites numbers you typed yourself.
+    if (!quiet || launch || untouched) {
       state.tempF = wx.tempF; state.altFt = wx.altFt; state.pressureInHg = wx.pressureInHg;
       writePref("tempF", wx.tempF); writePref("altFt", wx.altFt); writePref("pressureInHg", wx.pressureInHg);
       $("temp").value = wx.tempF; $("alt").value = wx.altFt; $("press").value = wx.pressureInHg.toFixed(2);
@@ -839,15 +841,18 @@ async function getWeather(quiet) {
     if (quiet) wxMsg = "";
   } finally { wxBusy = false; render(); }
 }
-// Refresh on open when location is already allowed and the last report is over 20 min old.
-async function autoWeather() {
-  if (!PHONE_APP || !navigator.onLine || wxAgeMin() < 20) return;
-  try { const p = await navigator.permissions?.query({ name: "geolocation" }); if (!p || p.state !== "granted") return; } catch { return; }
-  getWeather(true);
+// Every launch fetches fresh weather (asking for location if it hasn't been allowed yet).
+// Switching back to the app later refreshes only when the report is over 20 min old.
+async function autoWeather(launch) {
+  if (!PHONE_APP || !navigator.onLine || wxAgeMin() < (launch ? 2 : 20)) return;
+  let st = "prompt";
+  try { st = (await navigator.permissions?.query({ name: "geolocation" }))?.state || "prompt"; } catch {}
+  if (st === "denied" || (!launch && st !== "granted")) return;
+  getWeather(true, launch);
 }
 $("wx-get").addEventListener("click", () => getWeather(false));
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") autoWeather(); });
-window.addEventListener("online", autoWeather);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") autoWeather(false); });
+window.addEventListener("online", () => autoWeather(false));
 
 function setHeight(mag, dir) {
   if (dir) state.heightDir = dir;
@@ -1044,7 +1049,7 @@ $("add-profile").addEventListener("click", () => {
 
 render();
 startStore();
-autoWeather();
+autoWeather(true);
 </script>
 
 <script>
