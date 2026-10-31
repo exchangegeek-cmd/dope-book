@@ -1,6 +1,6 @@
 {
-  "name": "Dope Book",
-  "short_name": "Dope Book",
+  "name": "Data Book",
+  "short_name": "Data Book",
   "description": "Mil holds, dope card and dope log for PRS.",
   "start_url": "./",
   "scope": "./",

@@ -1,5 +1,5 @@
-// Dope Book service worker, build 6e97e37ecb
-const CACHE = "dope-6e97e37ecb";
+// Data Book service worker, build 6c033f45db
+const CACHE = "dope-6c033f45db";
 const SHELL = ["./", "index.html", "ballistics.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

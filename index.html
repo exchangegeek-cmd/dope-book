@@ -9,8 +9,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
-<title>Dope Book</title>
-
+<title>Data Book</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -157,7 +156,7 @@ nav.tabs button[aria-current="page"] { color: var(--accent); }
 
 <div class="wrap">
   <header>
-    <h1>Dope Book</h1>
+    <h1>Data Book</h1>
     <select id="ammo" class="ammo-pick" aria-label="Ammo"></select>
   </header>
   <div id="status" class="status" hidden></div>
@@ -915,7 +914,7 @@ $("export").addEventListener("click", async () => {
     e.ts || "", names.get(e.ammoId) || e.ammoName || "", e.ammoId || "", e.distanceYd, e.heightFt ?? "", e.elevMil, e.calcElevMil ?? "", e.mv ?? "",
     e.tempF ?? "", e.altFt ?? "", e.pressureInHg ?? "", e.suppressor == null ? "" : e.suppressor ? "on" : "off", e.note || ""].map(q).join(",")));
   const csv = lines.join("\n");
-  const fname = `dope-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  const fname = `data-book-log-${new Date().toISOString().slice(0, 10)}.csv`;
   if (PHONE_APP) {
     const u = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     const link = document.createElement("a"); link.href = u; link.download = fname;
@@ -953,7 +952,7 @@ function importCsv(text) {
   const head = (rows.shift() || []).map((h) => h.trim().toLowerCase());
   const col = (r, name) => { const i = head.indexOf(name); return i < 0 ? "" : (r[i] || "").trim(); };
   const nOrNull = (v) => { const n = parseFloat(v); return v === "" || !Number.isFinite(n) ? null : n; };
-  if (!head.includes("distance_yd") || !head.includes("elevation_mil")) return "That file isn't a Dope Book export. Nothing was added.";
+  if (!head.includes("distance_yd") || !head.includes("elevation_mil")) return "That file isn't a Data Book export. Nothing was added.";
   const known = new Map(), byName = new Map();
   for (const a of BUILTIN_AMMO) { known.set(a.id, a); byName.set(a.name.toLowerCase(), a.id); }
   for (const [id, p] of collectionView("profiles")) { known.set(id, p); if (p.name) byName.set(String(p.name).toLowerCase(), id); }
