@@ -315,6 +315,14 @@ nav.tabs button[aria-current="page"] { color: var(--accent); }
     </div>
     <div class="panel" id="profiles"></div>
     <button id="add-profile">Add ammo profile</button>
+    <div class="panel">
+      <span class="label">About</span>
+      <span id="app-version" style="font:500 15px var(--mono)"></span>
+      <div class="row" style="flex-wrap:wrap" id="app-update-row" hidden>
+        <button id="app-update">Check for update</button>
+        <span class="hint" id="app-update-msg" style="flex:1 1 160px"></span>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -350,6 +358,7 @@ const QUICK_YARDS = [200, 300, 400, 500, 600, 700, 800, 1000];
 // tools/build-web.mjs flips this to true for the installable phone version
 // (local storage instead of the Claude store, plus GPS weather).
 const PHONE_APP = true;
+const APP_VERSION = "2026-10-31 15:31";   // build date/time, stamped by tools/build-web.mjs
 
 // ---------- Local prefs (per phone conveniences) ----------
 function readPref(key, fallback) { try { const v = localStorage.getItem("dope:" + key); return v == null ? fallback : JSON.parse(v); } catch { return fallback; } }
@@ -1045,6 +1054,22 @@ $("add-profile").addEventListener("click", () => {
   write("profiles/" + id, { name: "New 6.5 CM load", mv: 2700, bc: 0.3, model: "G7", weight: 140, src: "Your own load. Enter velocity and BC." });
   state.ammoId = id; writePref("ammoId", id);
   setTimeout(() => { const f = document.querySelector(`.profile[data-id="${id}"] input`); f?.focus(); f?.select(); }, 50);
+});
+
+// ---------- Version + updates ----------
+$("app-version").textContent = PHONE_APP ? `Data Book · version ${APP_VERSION}` : "Data Book · Claude page (updates when Claude republishes it)";
+$("app-update-row").hidden = !PHONE_APP;
+$("app-update").addEventListener("click", async () => {
+  const msg = $("app-update-msg"), btn = $("app-update");
+  if (!navigator.onLine) { msg.textContent = "No signal. Try again when you're connected."; return; }
+  const reg = await navigator.serviceWorker?.getRegistration().catch(() => null);
+  if (!reg) { msg.textContent = "Offline copy isn't set up yet. Close the app and open it again with signal."; return; }
+  btn.disabled = true; msg.textContent = "Checking…";
+  // A new version installs and takes over right away (skipWaiting), then the page reloads into it.
+  navigator.serviceWorker.addEventListener("controllerchange", () => location.reload(), { once: true });
+  try { await reg.update(); } catch { btn.disabled = false; msg.textContent = "Couldn't reach the update server. Try again."; return; }
+  if (!reg.installing && !reg.waiting) { btn.disabled = false; msg.textContent = "You're on the latest version."; return; }
+  msg.textContent = "Updating…";
 });
 
 render();
