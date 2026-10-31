@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121614">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<title>Dope Book</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-thumb phone tool. Big readouts on top, inputs below, tab bar pinned to the bottom. */
+:root {
+  --bg: #eef0ec;
+  --panel: #ffffff;
+  --ink: #1b2420;
+  --muted: #5d6862;
+  --line: #d3d8d2;
+  --accent: #e2561c;        /* target-paster orange */
+  --accent-ink: #ffffff;
+  --accent-soft: #fbe6dc;
+  --calc: #6f7a85;          /* calculated, not observed */
+  --obs: #16653f;           /* observed dope */
+  --obs-soft: #e1f1e7;
+  --obs-ink: #ffffff;
+  --warn-bg: #fdf1cf;
+  --warn-ink: #7a5300;
+  --danger: #b3261e;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --panel: #1b201d; --ink: #e9eee9; --muted: #9aa59e; --line: #2f3632;
+  --accent: #ff7a3d; --accent-ink: #1a0d06; --accent-soft: #3a2116;
+  --calc: #8f9aa6; --obs: #5fd394; --obs-soft: #183626; --obs-ink: #0b2216;
+  --warn-bg: #3b2f10; --warn-ink: #f5d27a; --danger: #ff8a80; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121614; --panel: #1b201d; --ink: #e9eee9; --muted: #9aa59e; --line: #2f3632;
+  --accent: #ff7a3d; --accent-ink: #1a0d06; --accent-soft: #3a2116;
+  --calc: #8f9aa6; --obs: #5fd394; --obs-soft: #183626; --obs-ink: #0b2216;
+  --warn-bg: #3b2f10; --warn-ink: #f5d27a; --danger: #ff8a80; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--body); margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px calc(84px + env(safe-area-inset-bottom, 0px)); }
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+h1 { font: 700 24px/1 var(--display); letter-spacing: 0.02em; margin: 0; text-transform: uppercase; }
+h2 { font: 600 20px/1.1 var(--display); letter-spacing: 0.03em; text-transform: uppercase; margin: 0; text-wrap: balance; }
+select, input, button { font: inherit; color: inherit; }
+select, input[type="number"], input[type="text"] {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-width: 0; width: 100%; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 9px 12px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.ammo-pick { max-width: 64%; font-weight: 500; font-size: 14px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+.readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.readout { border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.readout.elev { background: var(--accent); color: var(--accent-ink); }
+.readout.wind { background: var(--panel); border: 1px solid var(--line); }
+.readout .num { font: 700 56px/0.95 var(--display); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+.readout .num small { font-size: 20px; font-weight: 600; margin-left: 2px; }
+.readout .sub { font-size: 13px; font-weight: 500; }
+.readout .inches { font-size: 12px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.readout.elev .label { color: inherit; opacity: 1; }
+.readout.elev.logged { background: var(--obs); color: var(--obs-ink); }
+.readout.elev.calc .num { font-style: italic; }
+.readout .none { font: 600 26px/1.1 var(--display); color: var(--muted); padding-block: 12px 6px; }
+.flight { font: 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.warn { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { min-width: 0; }
+.dist-val { font: 700 40px/1 var(--display); font-variant-numeric: tabular-nums; flex: 1; text-align: center; }
+.dist-val small { font-size: 18px; color: var(--muted); }
+.step { width: 52px; height: 48px; font: 600 18px var(--display); flex: none; }
+input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 11px; border-radius: 999px; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
+.wind-grid { display: grid; grid-template-columns: 1fr 176px; gap: 12px; align-items: center; }
+.clock { position: relative; width: 176px; height: 176px; border-radius: 50%; border: 1px dashed var(--line); }
+.clock button { position: absolute; width: 34px; height: 34px; padding: 0; border-radius: 50%; font: 600 15px var(--display); transform: translate(-50%, -50%); }
+.clock button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.clock .center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; font-size: 11px; color: var(--muted); line-height: 1.2; pointer-events: none; }
+.clock .center b { display: block; font: 600 13px var(--display); color: var(--ink); letter-spacing: 0.04em; }
+.speed { display: flex; flex-direction: column; gap: 8px; }
+.speed-val { font: 700 34px/1 var(--display); text-align: center; font-variant-numeric: tabular-nums; }
+.speed-val small { font-size: 16px; color: var(--muted); }
+.cond { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field span { font-size: 12px; color: var(--muted); }
+.hint { font-size: 13px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; }
+.obs-mark { color: var(--obs); font-weight: 600; }
+.calc-mark { color: var(--calc); font-style: italic; }
+table.card { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.card th { text-align: left; font: 500 12px var(--body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 4px; border-bottom: 1px solid var(--line); }
+table.card td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.card tr { cursor: pointer; }
+table.card tr.current td { background: var(--accent-soft); }
+td.yd { font: 600 20px var(--display); }
+td .v-obs { font: 700 22px var(--display); color: var(--obs); }
+td .v-calc { font: italic 500 20px var(--display); color: var(--calc); }
+td .tag { font: 500 11px var(--body); letter-spacing: 0.04em; margin-left: 4px; vertical-align: 2px; }
+td .tag.obs { color: var(--obs); }
+td .tag.calc { color: var(--calc); font-style: italic; }
+td .also { display: block; font: 12px var(--mono); color: var(--calc); }
+td.wind { font: 500 18px var(--display); color: var(--calc); font-style: italic; }
+.log-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.log-form input { font: 600 26px var(--display); text-align: center; padding: 8px; }
+.log-form select { font: 600 16px var(--display); padding: 8px 4px; flex: none; width: 88px; align-self: stretch; }
+.h-input { font: 700 34px/1 var(--display); text-align: center; flex: 1; width: 0; padding: 4px; font-variant-numeric: tabular-nums; }
+.hint.bad { color: var(--danger); }
+.autoline { font-size: 13px; color: var(--muted); }
+.entries { display: flex; flex-direction: column; }
+.entry { display: grid; grid-template-columns: 78px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.entry:last-child { border-bottom: 0; }
+.entry .yd { font: 700 24px var(--display); font-variant-numeric: tabular-nums; }
+.entry .el { font: 700 24px var(--display); color: var(--obs); font-variant-numeric: tabular-nums; }
+.entry .meta { font-size: 12px; color: var(--muted); }
+.entry button { font-size: 13px; padding: 6px 10px; }
+.entry button.armed { background: var(--danger); color: var(--panel); border-color: var(--danger); }
+.day { font: 600 14px var(--display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 10px; }
+.status { font-size: 13px; padding: 8px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); }
+.status[data-kind="ok"] { color: var(--obs); }
+.status[data-kind="warn"] { background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+.profile { border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.profile:first-of-type { border-top: 0; padding-top: 0; }
+.profile .wide { grid-column: 1 / -1; }
+.profile .src { font-size: 12px; color: var(--muted); grid-column: 1 / -1; }
+.check { display: flex; align-items: center; gap: 8px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+textarea { width: 100%; min-height: 120px; font: 12px var(--mono); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--panel); border-top: 1px solid var(--line);
+  padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); z-index: 5; }
+nav.tabs button { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; font: 600 15px var(--display); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button[aria-current="page"] { color: var(--accent); }
+@media (max-width: 380px) {
+  .readout .num { font-size: 46px; }
+  .wind-grid { grid-template-columns: 1fr; justify-items: center; }
+  .speed { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Dope Book</h1>
+    <select id="ammo" class="ammo-pick" aria-label="Ammo"></select>
+  </header>
+  <div id="status" class="status" hidden></div>
+
+  <!-- CALC -->
+  <section id="view-calc" class="wrap" style="padding:0">
+    <div class="readouts">
+      <div class="readout elev calc" id="elev-box">
+        <span class="label" id="out-elev-label">Calculated · dial up</span>
+        <span class="num" id="out-elev">0.0<small>mil</small></span>
+        <span class="sub" id="out-clicks">0 clicks</span>
+        <span class="inches" id="out-elev-in"></span>
+      </div>
+      <div class="readout wind" id="wind-box">
+        <span class="label">Wind hold</span>
+        <span class="none" id="out-wind-none">No wind set</span>
+        <span class="num" id="out-wind" hidden>0.0<small>mil</small></span>
+        <span class="sub" id="out-wind-dir" hidden></span>
+        <span class="inches" id="out-wind-in" hidden></span>
+      </div>
+    </div>
+    <div id="turret-warn" class="warn" hidden></div>
+    <div class="flight" id="out-flight"></div>
+
+    <div class="panel">
+      <span class="label">Distance</span>
+      <div class="row">
+        <button class="step" id="yd-minus" aria-label="25 yards closer">−25</button>
+        <div class="dist-val"><span id="yd-val">600</span> <small>yd</small></div>
+        <button class="step" id="yd-plus" aria-label="25 yards farther">+25</button>
+      </div>
+      <input type="range" id="yd" min="100" max="1200" step="5" value="600" aria-label="Distance in yards">
+      <div class="chips" id="yd-chips"></div>
+    </div>
+
+    <div class="panel">
+      <span class="label">Target height · compared to you</span>
+      <div class="row">
+        <button class="step" id="h-minus" aria-label="5 feet less">−5</button>
+        <input type="number" id="h-in" class="h-input" inputmode="numeric" min="0" max="1000" step="1" value="0" aria-label="Target height difference in feet">
+        <span style="font:600 18px var(--display);color:var(--muted)">ft</span>
+        <button class="step" id="h-plus" aria-label="5 feet more">+5</button>
+      </div>
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <div class="chips" id="h-dir" role="group" aria-label="Target above or below you">
+          <button class="chip" type="button" data-dir="1" aria-pressed="true">Above me</button>
+          <button class="chip" type="button" data-dir="-1" aria-pressed="false">Below me</button>
+        </div>
+        <button id="h-clear">Level</button>
+      </div>
+      <span class="hint" id="h-hint">Level with you.</span>
+    </div>
+
+    <div class="panel">
+      <span class="label">Wind · your call</span>
+      <div class="wind-grid">
+        <div class="speed">
+          <div class="speed-val"><span id="wmph-val">0</span> <small>mph</small></div>
+          <div class="row">
+            <button class="step" id="w-minus" aria-label="1 mph less">−1</button>
+            <input type="number" id="wmph" inputmode="decimal" min="0" max="40" step="1" value="0" aria-label="Wind speed in mph" style="text-align:center">
+            <button class="step" id="w-plus" aria-label="1 mph more">+1</button>
+          </div>
+          <button id="w-clear">Clear wind</button>
+          <span class="hint" id="clock-hint">Tap the clock: where the wind is coming from.</span>
+          <span class="hint" id="wx-wind" hidden></span>
+        </div>
+        <div class="clock" id="clock" role="group" aria-label="Wind direction, clock position">
+          <div class="center"><b>Target</b>is 12</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="label">Conditions</span>
+      <div class="cond">
+        <label class="field"><span>Temperature °F</span><input type="number" id="temp" inputmode="decimal" step="1" value="70"></label>
+        <label class="field"><span>Altitude ft</span><input type="number" id="alt" inputmode="decimal" step="10" value="0"></label>
+        <label class="field" style="grid-column:1/-1"><span>Air pressure inHg (station, not sea level)</span><input type="number" id="press" inputmode="decimal" step="0.01" min="15" max="32" placeholder="Blank = estimate from altitude"></label>
+      </div>
+      <span class="hint" id="press-hint">Air pressure is estimated from altitude.</span>
+      <div class="row" id="wx-row" style="flex-wrap:wrap" hidden>
+        <button id="wx-get">Get weather</button>
+        <span class="hint" id="wx-line" style="flex:1 1 180px"></span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="to-log" style="padding:14px;font:600 20px var(--display);letter-spacing:.05em;text-transform:uppercase">Log dope at this distance</button>
+  </section>
+
+  <!-- CARD -->
+  <section id="view-card" class="wrap" style="padding:0" hidden>
+    <div class="panel">
+      <h2 id="card-title">Dope card</h2>
+      <div class="autoline" id="card-cond"></div>
+      <div class="legend">
+        <span><span class="obs-mark">4.0 ✓</span> your logged dope</span>
+        <span><span class="calc-mark">4.3 calc</span> calculated, not yet shot</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="card">
+          <thead><tr><th>Yd</th><th>Elevation (mil)</th><th id="card-wind-h">Wind</th></tr></thead>
+          <tbody id="card-body"></tbody>
+        </table>
+      </div>
+      <span class="hint">Tap a row to open that distance in Calc. Logged dope shows your most recent entry for this ammo.</span>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section id="view-log" class="wrap" style="padding:0" hidden>
+    <div class="panel">
+      <h2>Log dope</h2>
+      <form id="log-form" class="log-form" novalidate>
+        <label class="field"><span>Distance (yd)</span><input type="number" id="log-yd" inputmode="numeric" min="25" max="2000" step="1" required></label>
+        <label class="field"><span>Elevation dialed (mil)</span><input type="number" id="log-el" inputmode="decimal" min="0" max="40" step="0.1" required></label>
+        <label class="field"><span>Temperature (°F)</span><input type="number" id="log-temp" inputmode="decimal" min="-40" max="130" step="1"></label>
+        <div class="field"><span>Target height (ft)</span>
+          <div class="row"><input type="number" id="log-h" inputmode="numeric" min="0" max="1000" step="1" aria-label="Target height difference in feet" style="flex:1;width:0">
+            <select id="log-hdir" aria-label="Target above or below you"><option value="1">above</option><option value="-1">below</option></select></div>
+        </div>
+        <span class="hint" style="grid-column:1/-1">Temperature and target height start at the Calc values. A change here updates Calc too. Use 0 for level.</span>
+        <div class="autoline" id="log-auto" style="grid-column:1/-1"></div>
+        <div id="log-err" class="hint" style="grid-column:1/-1;color:var(--danger)" hidden></div>
+        <button class="btn-primary" type="submit" style="grid-column:1/-1;padding:13px;font:600 20px var(--display);letter-spacing:.05em;text-transform:uppercase">Save</button>
+      </form>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h2>History</h2>
+        <div class="row"><button id="import">Import CSV</button><button id="export">Export CSV</button></div>
+      </div>
+      <input type="file" id="import-file" accept=".csv,text/csv,text/plain" hidden>
+      <div id="import-msg" class="hint" hidden></div>
+      <div class="row" style="gap:12px">
+        <label class="check"><input type="checkbox" id="log-filter" checked> This ammo only</label>
+      </div>
+      <div class="entries" id="entries"></div>
+      <textarea id="csv-fallback" hidden readonly aria-label="CSV export"></textarea>
+    </div>
+  </section>
+
+  <!-- GEAR -->
+  <section id="view-gear" class="wrap" style="padding:0" hidden>
+    <div class="panel">
+      <h2>Rifle and scope</h2>
+      <span class="hint">Remington 700 Magpul, 6.5 Creedmoor, 22" 1:8 · Vortex Viper PST Gen II 5-25×50 FFP, EBR-7C MRAD, 0.1 mil clicks</span>
+      <div class="cond">
+        <label class="field"><span>Zero distance (yd)</span><input type="number" id="r-zero" inputmode="numeric" step="1"></label>
+        <label class="field"><span>Scope height over bore (in)</span><input type="number" id="r-sh" inputmode="decimal" step="0.05"></label>
+        <label class="field"><span>Elevation left above zero (mil)</span><input type="number" id="r-avail" inputmode="decimal" step="0.1"></label>
+        <label class="field check" style="flex-direction:row;align-self:end;padding-bottom:10px"><input type="checkbox" id="r-supp"> Banish 46 on</label>
+      </div>
+      <span class="hint">To find elevation left: with the turret at zero, dial up until it stops and count the mils. Until then 10.0 is a guess.</span>
+    </div>
+    <div class="panel" id="profiles"></div>
+    <button id="add-profile">Add ammo profile</button>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-view="calc" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>Calc</button>
+  <button data-view="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>Card</button>
+  <button data-view="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Log</button>
+  <button data-view="gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Gear</button>
+</nav>
+
+<script src="ballistics.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+// ---------- Defaults ----------
+const BUILTIN_AMMO = [
+  { id: "h140bthp", name: "Hornady 140 gr BTHP Match", sku: "American Gunner #81483", mv: 2690, bc: 0.580, model: "G1", weight: 140,
+    src: "Box velocity (test barrel likely longer than your 22\"). G1 BC published; no G7 published." },
+  { id: "h120eldm", name: "Hornady 120 gr ELD Match", sku: "#81491", mv: 2910, bc: 0.245, model: "G7", weight: 120,
+    src: "Box velocity from a 24\" test barrel. G7 BC published by Hornady." },
+  { id: "w140", name: "Winchester Match 140 gr BTHP", sku: "S65CM", mv: 2710, bc: 0.590, model: "G1", weight: 140,
+    src: "Box velocity from a 24\" test barrel. G1 0.590 matches Winchester's published velocity table." },
+  { id: "b144", name: "Berger 144 gr LR Hybrid Target", sku: "#31081", mv: 2830, bc: 0.336, model: "G7", weight: 144,
+    src: "Box velocity. G7 BC from Berger's catalog." },
+  { id: "h147eldm", name: "Hornady 147 gr ELD Match", sku: "#81501", mv: 2695, bc: 0.351, model: "G7", weight: 147,
+    src: "Box velocity from a 24\" test barrel. G7 BC published by Hornady." },
+];
+const DEFAULT_RIFLE = { zeroYd: 100, sightHeightIn: 1.6, elevAvailMil: 10, suppressor: true };
+const CARD_YARDS = []; for (let y = 100; y <= 1000; y += 50) CARD_YARDS.push(y);
+const QUICK_YARDS = [200, 300, 400, 500, 600, 700, 800, 1000];
+
+// tools/build-web.mjs flips this to true for the installable phone version
+// (local storage instead of the Claude store, plus GPS weather).
+const PHONE_APP = true;
+
+// ---------- Local prefs (per phone conveniences) ----------
+function readPref(key, fallback) { try { const v = localStorage.getItem("dope:" + key); return v == null ? fallback : JSON.parse(v); } catch { return fallback; } }
+function writePref(key, val) { try { localStorage.setItem("dope:" + key, JSON.stringify(val)); } catch {} }
+
+// ---------- State ----------
+const state = {
+  view: "calc",
+  ammoId: readPref("ammoId", "h140bthp"),
+  yd: readPref("yd", 600),
+  windMph: 0,          // wind always starts at zero
+  windClock: null,
+  heightFt: 0,         // target height vs shooter, + above; starts level like wind
+  heightDir: 1,
+  tempF: readPref("tempF", 70),
+  altFt: readPref("altFt", 0),
+  pressureInHg: readPref("pressureInHg", null),   // station pressure; null = estimate from altitude
+  remote: { log: new Map(), profiles: new Map(), settings: new Map() },
+  dbReady: false,
+};
+
+// Writes that haven't reached the store yet, so nothing is lost on a weak signal.
+// Shape: { [path]: {op: "set", data} | {op: "delete"} }
+let outbox = readPref("outbox", {});
+function saveOutbox() { writePref("outbox", outbox); }
+
+function collectionView(name) {
+  const merged = new Map(state.remote[name]);
+  for (const [path, w] of Object.entries(outbox)) {
+    const [col, id] = path.split("/");
+    if (col !== name) continue;
+    if (w.op === "delete") merged.delete(id); else merged.set(id, w.data);
+  }
+  return merged;
+}
+
+function rifle() { return { ...DEFAULT_RIFLE, ...(collectionView("settings").get("rifle") || {}) }; }
+function ammoList() {
+  const over = collectionView("profiles");
+  const list = BUILTIN_AMMO.map((a) => ({ ...a, ...(over.get(a.id) || {}), builtin: true }));
+  for (const [id, p] of over) if (!BUILTIN_AMMO.some((a) => a.id === id)) list.push({ ...p, id, builtin: false });
+  return list.filter((a) => !a.hidden);
+}
+function currentAmmo() { const l = ammoList(); return l.find((a) => a.id === state.ammoId) || l[0]; }
+function logEntries() {
+  return [...collectionView("log").entries()].map(([id, d]) => ({ id, ...d }))
+    .sort((a, b) => (b.ts || "").localeCompare(a.ts || ""));
+}
+
+// ---------- Store ----------
+let db = null;
+function setStatus(text, kind) { const s = $("status"); s.hidden = !text; s.textContent = text || ""; s.dataset.kind = kind || ""; }
+
+// Phone app: everything lives in this phone's storage under one key.
+function saveLocalStore() {
+  const o = {};
+  for (const name of Object.keys(state.remote)) o[name] = Object.fromEntries(state.remote[name]);
+  try { localStorage.setItem("dope:store", JSON.stringify(o)); return true; }
+  catch { setStatus("Couldn't save on this phone (storage full or blocked). Export a backup now.", "warn"); return false; }
+}
+function loadLocalStore() {
+  const o = readPref("store", null) || {};
+  for (const name of Object.keys(state.remote)) state.remote[name] = new Map(Object.entries(o[name] || {}));
+}
+function applyLocal(path, data) {
+  const [col, id] = path.split("/");
+  if (data == null) state.remote[col].delete(id); else state.remote[col].set(id, data);
+}
+async function writeMany(list) {
+  if (PHONE_APP) { for (const [path, data] of list) applyLocal(path, data); saveLocalStore(); render(); return; }
+  for (const [path, data] of list) outbox[path] = data == null ? { op: "delete" } : { op: "set", data };
+  saveOutbox(); render(); await flush();
+}
+
+async function write(path, data) {
+  if (PHONE_APP) { applyLocal(path, data); saveLocalStore(); render(); return; }
+  outbox[path] = data == null ? { op: "delete" } : { op: "set", data };
+  saveOutbox();
+  render();
+  await flush();
+}
+let flushing = false;
+async function flush() {
+  if (!db || flushing) return;
+  flushing = true;
+  try {
+    for (const path of Object.keys(outbox)) {
+      const w = outbox[path];
+      try {
+        if (w.op === "delete") await db.doc(path).delete(); else await db.doc(path).set(w.data);
+        if (outbox[path] === w) { delete outbox[path]; saveOutbox(); }
+      } catch (e) {
+        if (e && e.code === "invalid_argument") { delete outbox[path]; saveOutbox(); continue; }
+        break; // offline or busy: keep it for later
+      }
+    }
+  } finally { flushing = false; }
+  updateSyncStatus();
+}
+function updateSyncStatus() {
+  const n = Object.keys(outbox).length;
+  if (!db) setStatus("Saving on this phone only. Your log won't reach your Claude account from here.", "warn");
+  else if (n) setStatus(`${n} change${n > 1 ? "s" : ""} saved on this phone, waiting for signal to sync.`, "warn");
+  else if (!state.dbReady) setStatus("Connecting to your saved log…", "");
+  else setStatus("", "");
+}
+
+async function startStore() {
+  if (PHONE_APP) {
+    loadLocalStore();
+    for (const [path, w] of Object.entries(outbox)) applyLocal(path, w.op === "delete" ? null : w.data);
+    if (Object.keys(outbox).length) { outbox = {}; saveOutbox(); saveLocalStore(); }
+    try { navigator.storage?.persist?.(); } catch {}
+    render();
+    return;
+  }
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db) { updateSyncStatus(); return; }
+  updateSyncStatus();
+  const slow = setTimeout(() => { if (!state.dbReady) setStatus("Can't reach your saved log yet. New entries are kept on this phone until it connects.", "warn"); }, 10000);
+  for (const name of ["log", "profiles", "settings"]) {
+    db.collection(name).onSnapshot((snap) => {
+      const m = new Map(); for (const d of snap.docs) if (d.exists) m.set(d.id, d.data());
+      state.remote[name] = m;
+      if (!snap.metadata.fromCache && name === "log") { state.dbReady = true; clearTimeout(slow); flush(); }
+      updateSyncStatus(); render();
+    }, () => { clearTimeout(slow); setStatus("Lost the connection to your saved log. Reload the page to reconnect.", "warn"); });
+  }
+}
+window.addEventListener("online", flush);
+
+// ---------- Ballistics ----------
+function envNow() {
+  return { tempF: num(state.tempF, 59), altFt: num(state.altFt, 0), pressureInHg: state.pressureInHg > 0 ? state.pressureInHg : undefined,
+    windMph: num(state.windMph, 0), windClock: state.windClock };
+}
+// Sight-line angle for a target heightFt above (+) or below (-) at yd; NaN if impossible.
+function slopeAt(heightFt, yd) { return heightFt ? Ballistics.slopeFromHeight(heightFt, yd) : 0; }
+function fmtHeight(h) { return h == null ? "height unknown" : h === 0 ? "level" : `${Math.abs(h)} ft ${h > 0 ? "above" : "below"}`; }
+function loadFor(a, r) { return { mv: +a.mv, bc: +a.bc, model: a.model, sightHeightIn: +r.sightHeightIn, zeroYd: +r.zeroYd }; }
+function num(v, d) { const n = parseFloat(v); return Number.isFinite(n) ? n : d; }
+// 1 mil subtends 3.6 in at 100 yd.
+function inches(mil, yd) { const v = mil * yd * 0.036; return v < 10 ? v.toFixed(1) : String(Math.round(v)); }
+function f1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+function windSet() { return state.windMph > 0 && state.windClock != null; }
+
+// ---------- Render ----------
+function renderAmmoSelect() {
+  const sel = $("ammo"), list = ammoList();
+  const html = list.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join("");
+  if (sel.dataset.html !== html) { sel.innerHTML = html; sel.dataset.html = html; }
+  sel.value = currentAmmo().id;
+}
+
+function renderCalc() {
+  const a = currentAmmo(), r = rifle();
+  $("yd").value = state.yd; $("yd-val").textContent = state.yd;
+  for (const b of $("yd-chips").children) b.setAttribute("aria-pressed", String(+b.dataset.yd === state.yd));
+  $("wmph-val").textContent = state.windMph; if (document.activeElement !== $("wmph")) $("wmph").value = state.windMph;
+  for (const b of $("clock").querySelectorAll("button")) b.setAttribute("aria-pressed", String(+b.dataset.h === state.windClock));
+  $("clock-hint").textContent = state.windClock == null ? "Tap the clock: where the wind is coming from." : `Wind from ${state.windClock} o'clock.`;
+  $("press-hint").textContent = state.pressureInHg > 0 ? `Using air pressure ${state.pressureInHg.toFixed(2)} inHg. Clear it to estimate from altitude.` : "Air pressure is estimated from altitude.";
+  renderWeather();
+
+  const h = state.heightFt, slope = slopeAt(h, state.yd), badH = !Number.isFinite(slope);
+  if (document.activeElement !== $("h-in")) $("h-in").value = Math.abs(h);
+  for (const b of $("h-dir").children) b.setAttribute("aria-pressed", String(+b.dataset.dir === state.heightDir));
+  $("h-hint").classList.toggle("bad", badH);
+  $("h-hint").textContent = badH ? "That's more height than the distance allows. Check the numbers; showing level for now."
+    : h === 0 ? "Level with you."
+    : `Target ${fmtHeight(h)} you · ${Math.abs(slope).toFixed(1)}° ${h > 0 ? "uphill" : "downhill"}. Distance is line of sight, as a rangefinder reads it.`;
+
+  let row;
+  const tr = trueFor(a, r);
+  try { row = Ballistics.solve(truedLoad(a, r, tr), { ...envNow(), slopeDeg: badH ? 0 : slope }, [state.yd])[0]; } catch { row = null; }
+  if (!row) { $("out-elev").innerHTML = "–"; return; }
+  const calcEl = Math.max(0, row.elevMil + (tr ? tr.off : 0));
+  const logged = observedByYard(a.id).get(state.yd);
+  const el = logged ? +logged.latest.elevMil : calcEl;
+  $("elev-box").classList.toggle("logged", !!logged);
+  $("elev-box").classList.toggle("calc", !logged);
+  $("out-elev-label").textContent = logged ? `✓ Your dope${logged.count > 1 ? " ×" + logged.count : ""} · dial up` : tr ? "Calculated from your dope · dial up" : "Calculated · dial up";
+  $("out-elev").innerHTML = `${f1(el)}<small>mil</small>`;
+  const lh = logged ? logged.latest.heightFt ?? null : null;
+  $("out-clicks").textContent = logged
+    ? `${Math.round(el * 10)} clicks · calc ${f1(calcEl)}` + (lh !== h && !(lh == null && h === 0) ? ` · logged ${fmtHeight(lh)}` : "")
+    : `${Math.round(el * 10)} clicks`;
+
+  const ws = windSet();
+  $("out-elev-in").textContent = `${inches(el, state.yd)}" drop`;
+  $("out-wind-none").hidden = ws; $("out-wind").hidden = !ws; $("out-wind-dir").hidden = !ws; $("out-wind-in").hidden = !ws;
+  if (!state.windMph) $("out-wind-none").textContent = "No wind set";
+  else if (state.windClock == null) $("out-wind-none").textContent = "Pick direction";
+  if (ws) {
+    const w = row.windMil;
+    $("out-wind").innerHTML = `${f1(Math.abs(w))}<small>mil</small>`;
+    $("out-wind-dir").textContent = Math.abs(w) < 0.05 ? "No hold" : `Hold ${w > 0 ? "right" : "left"} · ${state.windMph} mph @ ${state.windClock}`;
+    $("out-wind-in").textContent = `${inches(Math.abs(w), state.yd)}" drift`;
+  }
+
+  const avail = num(r.elevAvailMil, 0);
+  const warn = $("turret-warn");
+  if (avail > 0 && el > avail) {
+    warn.hidden = false;
+    warn.textContent = `Past your turret: about ${f1(avail)} mil left above zero. Dial ${f1(avail)} and hold ${f1(el - avail)} more on the reticle.`;
+  } else warn.hidden = true;
+
+  const sub = row.mach < 1 ? " · subsonic at target" : row.mach < 1.15 ? " · near transonic" : "";
+  $("out-flight").textContent = `${Math.round(row.velocity)} fps at target · ${row.tof.toFixed(2)} s flight · ` +
+    (tr ? `trued to ${tr.n} log${tr.n > 1 ? "s" : ""}: ${trueNote(a, tr)}` : `${a.mv} fps ${a.model} ${a.bc} · box numbers`) + sub;
+}
+
+function observedByYard(ammoId) {
+  const m = new Map();
+  for (const e of logEntries()) {
+    if (e.ammoId !== ammoId) continue;
+    const yd = Math.round(+e.distanceYd);
+    if (!m.has(yd)) m.set(yd, { latest: e, count: 0 });
+    m.get(yd).count++;
+  }
+  return m;
+}
+
+// ---------- Truing ----------
+// Fits the calculator to this ammo's logged dope so ranges you haven't shot come
+// out closer. Finds an effective muzzle velocity and, once there are 3+ entries
+// spread over 200+ yd, a constant mil offset (acts like a zero shift). Each entry
+// is solved at its own temperature, altitude and target height; unknown values
+// fall back to today's Calc conditions. Entries under 150 yd are too small to help.
+const TRUE_MIN_YD = 150;
+let trueCache = { key: null, val: null };
+function trueFor(a, r) {
+  const list = logEntries().filter((e) => e.ammoId === a.id && +e.distanceYd >= TRUE_MIN_YD && +e.elevMil > 0);
+  if (!list.length) return null;
+  const key = JSON.stringify([a.mv, a.bc, a.model, r.sightHeightIn, r.zeroYd, state.tempF, state.altFt,
+    state.pressureInHg, list.map((e) => [e.distanceYd, e.elevMil, e.tempF, e.altFt, e.pressureInHg, e.heightFt])]);
+  if (trueCache.key === key) return trueCache.val;
+
+  // Group entries that share conditions so each guess is one solve per group.
+  const groups = new Map();
+  for (const e of list) {
+    // Pressure: the entry's own reading, else its altitude, else today's Calc pressure.
+    const env = { tempF: num(e.tempF, num(state.tempF, 59)), altFt: num(e.altFt, num(state.altFt, 0)), windMph: 0, windClock: null,
+      pressureInHg: e.pressureInHg > 0 ? +e.pressureInHg : e.altFt == null && state.pressureInHg > 0 ? state.pressureInHg : undefined };
+    const yd = Math.round(+e.distanceYd), sl = slopeAt(num(e.heightFt, 0), yd);
+    env.slopeDeg = Number.isFinite(sl) ? sl : 0;
+    const k = `${env.tempF}|${env.altFt}|${env.pressureInHg}|${env.slopeDeg}`;
+    if (!groups.has(k)) groups.set(k, { env, items: [] });
+    groups.get(k).items.push({ yd, el: +e.elevMil });
+  }
+  const yds = list.map((e) => +e.distanceYd);
+  const useOffset = list.length >= 3 && Math.max(...yds) - Math.min(...yds) >= 200;
+  function score(mv) {
+    const res = [];
+    for (const g of groups.values()) {
+      const ys = [...new Set(g.items.map((i) => i.yd))].sort((x, y) => x - y);
+      const rows = new Map(Ballistics.solve({ ...loadFor(a, r), mv }, g.env, ys).map((row) => [row.yd, row.elevMil]));
+      for (const i of g.items) res.push(i.el - rows.get(i.yd));
+    }
+    const off = useOffset ? res.reduce((s, x) => s + x, 0) / res.length : 0;
+    return { mv, off, sse: res.reduce((s, x) => s + (x - off) ** 2, 0), n: res.length };
+  }
+  let val = null;
+  try {
+    const box = +a.mv, lo = box - 400, hi = box + 300;
+    let best = null;
+    for (let mv = lo; mv <= hi; mv += 50) { const t = score(mv); if (!best || t.sse < best.sse) best = t; }
+    for (const step of [10, 2]) {
+      const c = best.mv;
+      for (let mv = Math.max(lo, c - 5 * step); mv <= Math.min(hi, c + 5 * step); mv += step) { const t = score(mv); if (t.sse < best.sse) best = t; }
+    }
+    val = { mv: best.mv, off: best.off, n: best.n, rms: Math.sqrt(best.sse / best.n), atLimit: best.mv <= lo || best.mv >= hi };
+  } catch { val = null; }
+  trueCache = { key, val };
+  return val;
+}
+function truedLoad(a, r, t) { return t ? { ...loadFor(a, r), mv: t.mv } : loadFor(a, r); }
+function trueNote(a, t) {
+  return `${t.mv} fps (box ${a.mv})` + (Math.abs(t.off) >= 0.05 ? ` · offset ${t.off > 0 ? "+" : ""}${f1(t.off)} mil` : "");
+}
+
+function renderCard() {
+  const a = currentAmmo(), r = rifle(), env = envNow();
+  const obs = observedByYard(a.id);
+  const yards = [...new Set([...CARD_YARDS, ...obs.keys()])].filter((y) => y > 0).sort((x, y) => x - y);
+  let rows = [];
+  const tr = trueFor(a, r), off = tr ? tr.off : 0;
+  try { rows = Ballistics.solve(truedLoad(a, r, tr), env, yards); } catch {}
+  $("card-title").textContent = a.name;
+  $("card-cond").textContent = `${env.tempF}°F · ${env.altFt} ft${env.pressureInHg ? ` · ${env.pressureInHg.toFixed(2)} inHg` : ""} · zero ${r.zeroYd} yd · ` +
+    (tr ? `calc trued to ${tr.n} log${tr.n > 1 ? "s" : ""}: ${trueNote(a, tr)}, fits within ±${tr.rms.toFixed(2)} mil` : `${a.mv} fps box numbers`) + (windSet() ? ` · wind ${state.windMph} mph @ ${state.windClock}` : " · no wind set") + " · level ground";
+  $("card-wind-h").textContent = windSet() ? "Wind (mil)" : "Wind";
+  $("card-body").innerHTML = rows.map((row) => {
+    const o = obs.get(row.yd);
+    const calc = f1(Math.max(0, row.elevMil + off));
+    const elev = o
+      ? `<span class="v-obs">${f1(+o.latest.elevMil)}</span><span class="tag obs">✓ logged${o.count > 1 ? " ×" + o.count : ""}</span><span class="also">calc ${calc}</span>`
+      : `<span class="v-calc">${calc}</span><span class="tag calc">calc</span>`;
+    const wind = windSet() ? `${row.windMil >= 0 ? "R" : "L"} ${f1(Math.abs(row.windMil))}` : "–";
+    return `<tr data-yd="${row.yd}" class="${row.yd === state.yd ? "current" : ""}"><td class="yd">${row.yd}</td><td>${elev}</td><td class="wind">${wind}</td></tr>`;
+  }).join("");
+}
+
+function fmtWhen(ts) {
+  if (!ts) return "Date unknown";
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+function dayKey(ts) { return ts ? new Date(ts).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "Before the app"; }
+
+function renderLog() {
+  const a = currentAmmo(), r = rifle();
+  $("log-auto").textContent = `Saves with: ${a.name} · ${state.altFt} ft${state.pressureInHg > 0 ? ` · ${state.pressureInHg.toFixed(2)} inHg` : ""} · ${r.suppressor ? "suppressor on" : "no suppressor"} · today's date and time`;
+  if (document.activeElement !== $("log-temp")) $("log-temp").value = state.tempF;
+  if (document.activeElement !== $("log-h") && document.activeElement !== $("log-hdir")) {
+    $("log-h").value = Math.abs(state.heightFt); $("log-hdir").value = String(state.heightDir);
+  }
+  const onlyThis = $("log-filter").checked;
+  const names = new Map(ammoList().map((x) => [x.id, x.name]));
+  const list = logEntries().filter((e) => !onlyThis || e.ammoId === a.id);
+  if (!list.length) {
+    $("entries").innerHTML = `<p class="hint">No dope logged${onlyThis ? " for this ammo" : ""} yet. Shoot, then save the distance and what you dialed.</p>`;
+    return;
+  }
+  let html = "", lastDay = null;
+  for (const e of list) {
+    const day = dayKey(e.ts);
+    if (day !== lastDay) { html += `<div class="day">${esc(day)}</div>`; lastDay = day; }
+    const meta = [onlyThis ? null : esc(names.get(e.ammoId) || e.ammoName || "Unknown ammo"), fmtWhen(e.ts),
+      e.tempF != null ? `${e.tempF}°F` : null, e.heightFt != null ? `target ${fmtHeight(e.heightFt)}` : null, e.calcElevMil != null ? `calc ${f1(e.calcElevMil)}` : null,
+      e.note ? esc(e.note) : null].filter(Boolean).join(" · ");
+    html += `<div class="entry"><span class="yd">${Math.round(e.distanceYd)}<small style="font-size:13px;color:var(--muted)"> yd</small></span>
+      <div style="min-width:0"><span class="el">${f1(+e.elevMil)} mil</span><div class="meta">${meta}</div></div>
+      <button data-del="${esc(e.id)}" aria-label="Delete entry">Delete</button></div>`;
+  }
+  $("entries").innerHTML = html;
+}
+
+function renderGear() {
+  const r = rifle();
+  for (const [id, key] of [["r-zero", "zeroYd"], ["r-sh", "sightHeightIn"], ["r-avail", "elevAvailMil"]])
+    if (document.activeElement !== $(id)) $(id).value = r[key];
+  $("r-supp").checked = !!r.suppressor;
+
+  const box = $("profiles");
+  if (box.contains(document.activeElement)) return; // don't redraw under the cursor
+  box.innerHTML = `<h2>Ammo profiles</h2><span class="hint">Change the velocity here once you chronograph a load. Calc and the card use it right away.</span>` +
+    ammoList().map((a) => `
+    <div class="profile" data-id="${a.id}">
+      <label class="field wide"><span>Name</span><input type="text" data-k="name" value="${esc(a.name)}"></label>
+      <label class="field"><span>Muzzle velocity (fps)</span><input type="number" inputmode="numeric" data-k="mv" value="${a.mv}"></label>
+      <label class="field"><span>Bullet weight (gr)</span><input type="number" inputmode="numeric" data-k="weight" value="${a.weight ?? ""}"></label>
+      <label class="field"><span>BC</span><input type="number" inputmode="decimal" step="0.001" data-k="bc" value="${a.bc}"></label>
+      <label class="field"><span>Drag model</span><select data-k="model"><option${a.model === "G1" ? " selected" : ""}>G1</option><option${a.model === "G7" ? " selected" : ""}>G7</option></select></label>
+      ${a.src ? `<span class="src">${esc(a.sku ? a.sku + ". " : "")}${esc(a.src)}</span>` : ""}
+      <div class="row wide" style="justify-content:flex-end">${a.builtin ? `<button data-reset="${a.id}">Reset to box numbers</button>` : ""}<button data-hide="${a.id}">Remove</button></div>
+    </div>`).join("");
+}
+
+function render() {
+  renderAmmoSelect();
+  if (state.view === "calc") renderCalc();
+  if (state.view === "card") renderCard();
+  if (state.view === "log") renderLog();
+  if (state.view === "gear") renderGear();
+}
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+// ---------- Wiring ----------
+function show(view) {
+  state.view = view;
+  for (const v of ["calc", "card", "log", "gear"]) $("view-" + v).hidden = v !== view;
+  for (const b of document.querySelectorAll("nav.tabs button")) {
+    if (b.dataset.view === view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  }
+  render();
+  window.scrollTo(0, 0);
+}
+for (const b of document.querySelectorAll("nav.tabs button")) b.addEventListener("click", () => show(b.dataset.view));
+
+$("ammo").addEventListener("change", (e) => { state.ammoId = e.target.value; writePref("ammoId", state.ammoId); render(); });
+
+function setYd(v) { state.yd = Math.min(2000, Math.max(25, Math.round(v))); writePref("yd", state.yd); render(); }
+$("yd").addEventListener("input", (e) => setYd(+e.target.value));
+$("yd-minus").addEventListener("click", () => setYd(state.yd - 25));
+$("yd-plus").addEventListener("click", () => setYd(state.yd + 25));
+$("yd-chips").innerHTML = QUICK_YARDS.map((y) => `<button class="chip" data-yd="${y}" aria-pressed="false">${y}</button>`).join("");
+$("yd-chips").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setYd(+b.dataset.yd); });
+
+function setWind(v) { state.windMph = Math.min(40, Math.max(0, Math.round(num(v, 0)))); render(); }
+$("w-minus").addEventListener("click", () => setWind(state.windMph - 1));
+$("w-plus").addEventListener("click", () => setWind(state.windMph + 1));
+$("wmph").addEventListener("input", (e) => setWind(e.target.value));
+$("w-clear").addEventListener("click", () => { state.windMph = 0; state.windClock = null; render(); });
+(function buildClock() {
+  const c = $("clock"), r = 70;
+  for (let h = 1; h <= 12; h++) {
+    const a = h * Math.PI / 6;
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.h = h; b.textContent = h; b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", `Wind from ${h} o'clock`);
+    b.style.left = `${88 + r * Math.sin(a)}px`; b.style.top = `${88 - r * Math.cos(a)}px`;
+    c.appendChild(b);
+  }
+  c.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    state.windClock = state.windClock === +b.dataset.h ? null : +b.dataset.h;
+    render();
+  });
+})();
+
+$("temp").value = state.tempF; $("alt").value = state.altFt;
+$("temp").addEventListener("input", (e) => { state.tempF = num(e.target.value, 59); writePref("tempF", state.tempF); render(); });
+$("alt").addEventListener("input", (e) => { state.altFt = num(e.target.value, 0); writePref("altFt", state.altFt); render(); });
+if (state.pressureInHg > 0) $("press").value = state.pressureInHg.toFixed(2);
+$("press").addEventListener("input", (e) => {
+  const v = parseFloat(e.target.value);
+  state.pressureInHg = v >= 15 && v <= 32 ? v : null; writePref("pressureInHg", state.pressureInHg); render();
+});
+
+// ---------- Weather (phone app only: Claude pages can't reach outside sites or GPS) ----------
+// Open-Meteo, free, no key. surface_pressure is station pressure at the location's ground
+// elevation, which is what the solver wants; elevation comes back in meters.
+let wx = readPref("wx", null);
+let wxBusy = false, wxMsg = "";
+function compass(deg) {
+  const d = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return d[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
+}
+function wxAgeMin() { return wx ? (Date.now() - Date.parse(wx.ts)) / 60000 : Infinity; }
+function ago(min) {
+  if (min < 1.5) return "just now";
+  if (min < 90) return `${Math.round(min)} min ago`;
+  if (min < 48 * 60) return `${Math.round(min / 6) / 10} h ago`;
+  return `${Math.round(min / 1440)} days ago`;
+}
+function fieldsMatchWx() {
+  return !!wx && state.tempF === wx.tempF && state.altFt === wx.altFt && state.pressureInHg === wx.pressureInHg;
+}
+function renderWeather() {
+  if (!PHONE_APP) return;
+  $("wx-row").hidden = false;
+  $("wx-get").disabled = wxBusy;
+  $("wx-get").textContent = wxBusy ? "Getting…" : wx ? "Update weather" : "Get weather";
+  const age = wxAgeMin();
+  let line = wxMsg;
+  if (!line) line = !wx ? "Uses your location to fill temperature, pressure and altitude."
+    : `Weather ${ago(age)}: ${wx.tempF}°F · ${wx.pressureInHg.toFixed(2)} inHg · ${wx.altFt} ft` +
+      (fieldsMatchWx() ? "" : " · you've changed some values") +
+      (age > 180 ? " · old, update when you have signal" : "");
+  $("wx-line").textContent = line;
+  $("wx-line").classList.toggle("bad", !!wxMsg || age > 180);
+  const ww = $("wx-wind");
+  ww.hidden = !wx;
+  if (wx) ww.textContent = `Forecast near you (${ago(age)}): ${wx.windMph} mph from ${compass(wx.windDir)}, gusts ${wx.gustMph}. A starting point only; set your own call.`;
+}
+async function getWeather(quiet) {
+  if (wxBusy) return;
+  wxBusy = true; wxMsg = ""; renderWeather();
+  try {
+    const pos = await new Promise((res, rej) => navigator.geolocation
+      ? navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 })
+      : rej({ code: -1 }));
+    const { latitude: lat, longitude: lon } = pos.coords;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}` +
+      "&current=temperature_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&temperature_unit=fahrenheit&wind_speed_unit=mph";
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+    let j;
+    try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error("http " + r.status); j = await r.json(); }
+    finally { clearTimeout(timer); }
+    const c = j.current;
+    const untouched = !wx || fieldsMatchWx();
+    wx = { ts: new Date().toISOString(), tempF: Math.round(c.temperature_2m), pressureInHg: Math.round(c.surface_pressure * 0.0295300 * 100) / 100,
+      altFt: Math.round(j.elevation * 3.28084), windMph: Math.round(c.wind_speed_10m), windDir: c.wind_direction_10m, gustMph: Math.round(c.wind_gusts_10m) };
+    writePref("wx", wx);
+    // A background refresh never overwrites numbers you typed yourself.
+    if (!quiet || untouched) {
+      state.tempF = wx.tempF; state.altFt = wx.altFt; state.pressureInHg = wx.pressureInHg;
+      writePref("tempF", wx.tempF); writePref("altFt", wx.altFt); writePref("pressureInHg", wx.pressureInHg);
+      $("temp").value = wx.tempF; $("alt").value = wx.altFt; $("press").value = wx.pressureInHg.toFixed(2);
+    }
+  } catch (e) {
+    if (e && e.code === 1) wxMsg = "Location is blocked for this app. Allow it in the browser's site settings, or type the conditions.";
+    else if (e && e.code === -1) wxMsg = "This browser can't give a location. Type the conditions.";
+    else if (e && (e.code === 2 || e.code === 3)) wxMsg = "Couldn't get a location fix. Try again in the open, or type the conditions.";
+    else wxMsg = !navigator.onLine ? "No signal. " + (wx ? "Showing the last report." : "Type the conditions.") : "Weather service didn't answer. Try again, or type the conditions.";
+    if (quiet) wxMsg = "";
+  } finally { wxBusy = false; render(); }
+}
+// Refresh on open when location is already allowed and the last report is over 20 min old.
+async function autoWeather() {
+  if (!PHONE_APP || !navigator.onLine || wxAgeMin() < 20) return;
+  try { const p = await navigator.permissions?.query({ name: "geolocation" }); if (!p || p.state !== "granted") return; } catch { return; }
+  getWeather(true);
+}
+$("wx-get").addEventListener("click", () => getWeather(false));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") autoWeather(); });
+window.addEventListener("online", autoWeather);
+
+function setHeight(mag, dir) {
+  if (dir) state.heightDir = dir;
+  const m = Math.min(1000, Math.max(0, Math.round(num(mag, 0))));
+  state.heightFt = m * state.heightDir;
+  render();
+}
+$("h-minus").addEventListener("click", () => setHeight(Math.abs(state.heightFt) - 5));
+$("h-plus").addEventListener("click", () => setHeight(Math.abs(state.heightFt) + 5));
+$("h-in").addEventListener("input", (e) => setHeight(e.target.value));
+$("h-dir").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setHeight(Math.abs(state.heightFt), +b.dataset.dir); });
+$("h-clear").addEventListener("click", () => setHeight(0, 1));
+
+$("card-body").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-yd]"); if (tr) { setYd(+tr.dataset.yd); show("calc"); } });
+
+$("to-log").addEventListener("click", () => { show("log"); $("log-yd").value = state.yd; $("log-el").value = ""; $("log-el").focus(); });
+
+$("log-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const yd = parseFloat($("log-yd").value), el = parseFloat($("log-el").value), err = $("log-err");
+  if (!(yd >= 25 && yd <= 2000)) { err.hidden = false; err.textContent = "Enter a distance between 25 and 2000 yards."; return; }
+  if (!(el >= 0 && el <= 40)) { err.hidden = false; err.textContent = "Enter the elevation you dialed, in mils (for example 4.3)."; return; }
+  const tRaw = $("log-temp").value.trim(), t = parseFloat(tRaw);
+  if (tRaw && !(t >= -40 && t <= 130)) { err.hidden = false; err.textContent = "Enter a temperature between -40 and 130 °F, or leave it blank."; return; }
+  const hRaw = $("log-h").value.trim(), hDir = +$("log-hdir").value;
+  const hFt = hRaw ? Math.round(parseFloat(hRaw)) * hDir : null;
+  if (hRaw && !(Math.abs(hFt) <= 1000 && Number.isFinite(slopeAt(hFt, yd)))) { err.hidden = false; err.textContent = "Enter the target height in feet (0 for level), or leave it blank."; return; }
+  err.hidden = true;
+  if (tRaw) { state.tempF = t; writePref("tempF", t); $("temp").value = t; }
+  if (hFt != null) { state.heightFt = hFt; state.heightDir = hDir; }
+  const a = currentAmmo(), r = rifle();
+  let calc = null;
+  try { calc = Math.max(0, Ballistics.solve(loadFor(a, r), { ...envNow(), windMph: 0, slopeDeg: slopeAt(hFt || 0, yd) }, [Math.round(yd)])[0].elevMil); } catch {}
+  const id = "e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  write("log/" + id, {
+    distanceYd: Math.round(yd), elevMil: Math.round(el * 10) / 10,
+    ammoId: a.id, ammoName: a.name, mv: +a.mv,
+    ts: new Date().toISOString(), tempF: tRaw ? t : null, heightFt: hFt, altFt: num(state.altFt, null),
+    pressureInHg: state.pressureInHg > 0 ? state.pressureInHg : null,
+    wxAt: wx && wxAgeMin() < 180 && fieldsMatchWx() ? wx.ts : null,
+    suppressor: !!r.suppressor, calcElevMil: calc == null ? null : Math.round(calc * 100) / 100,
+  });
+  $("log-el").value = "";
+  $("log-yd").focus();
+});
+["log-yd", "log-el", "log-temp", "log-h"].forEach((id) => $(id).addEventListener("input", () => { $("log-err").hidden = true; }));
+$("log-filter").addEventListener("change", render);
+
+$("entries").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-del]"); if (!b) return;
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "Tap to confirm";
+    setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "Delete"; } }, 3000);
+    return;
+  }
+  write("log/" + b.dataset.del, null);
+});
+
+$("export").addEventListener("click", async () => {
+  const names = new Map(ammoList().map((x) => [x.id, x.name]));
+  const head = ["date_time", "ammo", "ammo_id", "distance_yd", "target_height_ft", "elevation_mil", "calc_elevation_mil", "muzzle_velocity_fps", "temp_f", "altitude_ft", "pressure_inhg", "suppressor", "note"];
+  const q = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = [head.join(",")].concat(logEntries().slice().reverse().map((e) => [
+    e.ts || "", names.get(e.ammoId) || e.ammoName || "", e.ammoId || "", e.distanceYd, e.heightFt ?? "", e.elevMil, e.calcElevMil ?? "", e.mv ?? "",
+    e.tempF ?? "", e.altFt ?? "", e.pressureInHg ?? "", e.suppressor == null ? "" : e.suppressor ? "on" : "off", e.note || ""].map(q).join(",")));
+  const csv = lines.join("\n");
+  const fname = `dope-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  if (PHONE_APP) {
+    const u = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const link = document.createElement("a"); link.href = u; link.download = fname;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 10000);
+    return;
+  }
+  let dl = null;
+  try { dl = await window.claude?.use?.("downloads"); } catch {}
+  if (dl) {
+    try { await dl.save({ filename: fname, data: csv }); return; }
+    catch (err) { if (err && err.code === "declined") return; }
+  }
+  const t = $("csv-fallback"); t.hidden = false; t.value = csv; t.select();
+});
+
+// Import: reads this app's own CSV export (from the Claude page or a backup).
+// Entries already in the log are skipped, so importing the same file twice is harmless.
+function parseCsv(text) {
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.filter((r) => r.some((x) => x.trim() !== ""));
+}
+function entryKey(e) { return [e.ts || "", e.ammoId, Math.round(+e.distanceYd), (+e.elevMil).toFixed(1)].join("|"); }
+function importCsv(text) {
+  const rows = parseCsv(text.replace(/^\uFEFF/, ""));
+  const head = (rows.shift() || []).map((h) => h.trim().toLowerCase());
+  const col = (r, name) => { const i = head.indexOf(name); return i < 0 ? "" : (r[i] || "").trim(); };
+  const nOrNull = (v) => { const n = parseFloat(v); return v === "" || !Number.isFinite(n) ? null : n; };
+  if (!head.includes("distance_yd") || !head.includes("elevation_mil")) return "That file isn't a Dope Book export. Nothing was added.";
+  const known = new Map(), byName = new Map();
+  for (const a of BUILTIN_AMMO) { known.set(a.id, a); byName.set(a.name.toLowerCase(), a.id); }
+  for (const [id, p] of collectionView("profiles")) { known.set(id, p); if (p.name) byName.set(String(p.name).toLowerCase(), id); }
+  const have = new Set(logEntries().map(entryKey));
+  const writes = [], unknown = new Set();
+  let dup = 0, bad = 0;
+  for (const r of rows) {
+    const name = col(r, "ammo"), idIn = col(r, "ammo_id");
+    const ammoId = known.has(idIn) ? idIn : byName.get(name.toLowerCase());
+    if (!ammoId) { unknown.add(name || "(blank)"); continue; }
+    const yd = nOrNull(col(r, "distance_yd")), el = nOrNull(col(r, "elevation_mil"));
+    if (!(yd > 0) || el == null) { bad++; continue; }
+    const s = col(r, "suppressor").toLowerCase(), note = col(r, "note");
+    const doc = {
+      distanceYd: Math.round(yd), elevMil: el, ammoId, ammoName: name || known.get(ammoId)?.name || "", mv: nOrNull(col(r, "muzzle_velocity_fps")),
+      ts: col(r, "date_time") || null, tempF: nOrNull(col(r, "temp_f")), heightFt: nOrNull(col(r, "target_height_ft")),
+      altFt: nOrNull(col(r, "altitude_ft")), pressureInHg: nOrNull(col(r, "pressure_inhg")),
+      suppressor: s === "on" ? true : s === "off" ? false : null, calcElevMil: nOrNull(col(r, "calc_elevation_mil")),
+      ...(note ? { note } : {}),
+    };
+    const k = entryKey(doc);
+    if (have.has(k)) { dup++; continue; }
+    have.add(k);
+    let h = 0; for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    writes.push(["log/i" + h.toString(36) + Math.round(yd), doc]);
+  }
+  if (writes.length) writeMany(writes);
+  const parts = [`Added ${writes.length} entr${writes.length === 1 ? "y" : "ies"}.`];
+  if (dup) parts.push(`${dup} already in the log.`);
+  if (unknown.size) parts.push(`Skipped ammo not in Gear: ${[...unknown].join(", ")}. Add it in Gear, then import again.`);
+  if (bad) parts.push(`${bad} row${bad > 1 ? "s" : ""} unreadable.`);
+  return parts.join(" ");
+}
+$("import").addEventListener("click", () => $("import-file").click());
+$("import-file").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  const msg = $("import-msg"); msg.hidden = false;
+  try { msg.textContent = importCsv(await file.text()); } catch { msg.textContent = "Couldn't read that file. Nothing was added."; }
+});
+
+// Rifle settings
+function saveRifle() {
+  const next = { ...rifle(), zeroYd: num($("r-zero").value, 100), sightHeightIn: num($("r-sh").value, 1.6),
+    elevAvailMil: num($("r-avail").value, 10), suppressor: $("r-supp").checked };
+  write("settings/rifle", next);
+}
+let rifleTimer;
+["r-zero", "r-sh", "r-avail"].forEach((id) => $(id).addEventListener("input", () => { clearTimeout(rifleTimer); rifleTimer = setTimeout(saveRifle, 700); }));
+$("r-supp").addEventListener("change", saveRifle);
+
+// Ammo profiles: edits save after a pause so typing doesn't fire a write per keystroke.
+const profTimers = {};
+function profileDoc(id) {
+  const base = BUILTIN_AMMO.find((a) => a.id === id);
+  return { ...(base || {}), ...(collectionView("profiles").get(id) || {}) };
+}
+$("profiles").addEventListener("input", (e) => {
+  const el = e.target.closest("[data-k]"); if (!el) return;
+  const card = el.closest(".profile"), id = card.dataset.id;
+  clearTimeout(profTimers[id]);
+  profTimers[id] = setTimeout(() => {
+    const d = profileDoc(id);
+    for (const f of card.querySelectorAll("[data-k]")) {
+      const k = f.dataset.k, v = f.value;
+      d[k] = ["mv", "bc", "weight"].includes(k) ? num(v, d[k]) : v;
+    }
+    delete d.builtin;
+    write("profiles/" + id, d);
+  }, 700);
+});
+$("profiles").addEventListener("click", (e) => {
+  const reset = e.target.closest("button[data-reset]"), hide = e.target.closest("button[data-hide]");
+  if (reset) { document.activeElement?.blur(); write("profiles/" + reset.dataset.reset, null); }
+  if (hide) {
+    if (!hide.classList.contains("armed")) { hide.classList.add("armed"); hide.textContent = "Tap to confirm"; setTimeout(() => { if (hide.isConnected) { hide.classList.remove("armed"); hide.textContent = "Remove"; } }, 3000); return; }
+    const id = hide.dataset.hide;
+    document.activeElement?.blur();
+    write("profiles/" + id, { ...profileDoc(id), hidden: true });
+    if (state.ammoId === id) { state.ammoId = ammoList()[0]?.id; writePref("ammoId", state.ammoId); }
+  }
+});
+$("add-profile").addEventListener("click", () => {
+  const id = "c" + Date.now().toString(36);
+  write("profiles/" + id, { name: "New 6.5 CM load", mv: 2700, bc: 0.3, model: "G7", weight: 140, src: "Your own load. Enter velocity and BC." });
+  state.ammoId = id; writePref("ammoId", id);
+  setTimeout(() => { const f = document.querySelector(`.profile[data-id="${id}"] input`); f?.focus(); f?.select(); }, 50);
+});
+
+render();
+startStore();
+autoWeather();
+</script>
+
+<script>
+// Offline: the service worker keeps a copy of the app on the phone.
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
